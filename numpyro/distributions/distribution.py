@@ -194,7 +194,7 @@ class Distribution(metaclass=DistributionMeta):
                         ),
                     )
                 )
-        return tuple(all_pytree_data_fields)
+        return tuple(sorted(all_pytree_data_fields))
 
     @classmethod
     def gather_pytree_aux_fields(cls) -> tuple[str, ...]:
@@ -205,7 +205,7 @@ class Distribution(metaclass=DistributionMeta):
             if issubclass(base, Distribution):
                 all_pytree_aux_fields += base.__dict__.get("pytree_aux_fields", ())
         # remove duplicates
-        all_pytree_aux_fields = tuple(set(all_pytree_aux_fields))
+        all_pytree_aux_fields = tuple(sorted(set(all_pytree_aux_fields)))
         return all_pytree_aux_fields
 
     def tree_flatten(self) -> tuple[tuple[Any, ...], tuple[Any, ...]]:
