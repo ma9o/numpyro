@@ -233,7 +233,7 @@ class Distribution(metaclass=DistributionMeta):
                         ),
                     )
                 )
-        # remove duplicates, keeping declaration order
+        # remove duplicates, keeping MRO order (subclass fields first)
         return tuple(dict.fromkeys(all_pytree_data_fields))
 
     @classmethod
@@ -244,7 +244,7 @@ class Distribution(metaclass=DistributionMeta):
         for base in bases:
             if issubclass(base, Distribution):
                 all_pytree_aux_fields += base.__dict__.get("pytree_aux_fields", ())
-        # remove duplicates, keeping declaration order
+        # remove duplicates, keeping MRO order (subclass fields first)
         all_pytree_aux_fields = tuple(dict.fromkeys(all_pytree_aux_fields))
         return all_pytree_aux_fields
 

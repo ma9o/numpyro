@@ -4743,18 +4743,54 @@ def test_consistent_pytree() -> None:
     jax.lax.scan(lambda *_: (make_dist(), None), init, jnp.arange(7))
 
 
-def test_pytree_fields_follow_declaration_order():
-    """Pytree fields keep declaration order.
+@pytest.mark.parametrize(
+    "cls, data_fields, aux_fields",
+    [
+        (
+            dist.Normal,
+            ("loc", "scale"),
+            ("_validate_args", "_batch_shape", "_event_shape"),
+        ),
+        # NegativeBinomial2 and its base GammaPoisson both declare "concentration"
+        (
+            dist.NegativeBinomial2,
+            ("concentration", "rate", "_gamma"),
+            ("_validate_args", "_batch_shape", "_event_shape"),
+        ),
+        (
+            dist.CAR,
+            ("loc", "correlation", "conditional_precision", "adj_matrix"),
+            (
+                "_validate_args",
+                "is_sparse",
+                "adj_matrix",
+                "_batch_shape",
+                "_event_shape",
+            ),
+        ),
+        (
+            dist.MaskedDistribution,
+            ("base_dist", "_mask"),
+            (
+                "_validate_args",
+                "_mask",
+                "has_enumerate_support",
+                "_batch_shape",
+                "_event_shape",
+            ),
+        ),
+    ],
+)
+def test_pytree_fields_follow_mro_order(cls, data_fields, aux_fields):
+    """Pytree fields come out in MRO order (subclass fields first), deduplicated.
 
-    A distribution then flattens identically in every process, so JAX's
-    persistent compilation cache can reuse the programs jit lowers from it.
+    The order must not depend on the string hash seed: a distribution then
+    flattens identically in every process, so JAX's persistent compilation
+    cache can reuse the programs jit lowers from it. A set-based gather would
+    produce all of these orders on only a tiny fraction of hash seeds.
     """
-    assert dist.Normal.gather_pytree_data_fields() == ("loc", "scale")
-    assert dist.Normal.gather_pytree_aux_fields() == (
-        "_validate_args",
-        "_batch_shape",
-        "_event_shape",
-    )
+    assert cls.gather_pytree_data_fields() == data_fields
+    assert cls.gather_pytree_aux_fields() == aux_fields
 
 
 def test_distribution_repr():
